@@ -12,12 +12,12 @@ class StatsVC: UIViewController {
     // MARK: STEP 11: Going to StatsVC
     // Read the instructions in MainVC.swift
     
-    var score: Int?
-    var missed: Int?
+    var streak: Int?
+    var lastThreeResults: [Bool]?
     
-    init(score: Int, missed: Int) {
-        self.score = score
-        self.missed = missed
+    init(streak: Int, lastThreeResults: [Bool]) {
+        self.streak = streak
+        self.lastThreeResults = lastThreeResults
         // Delegate rest of the initialization to super class
         // designated initializer.
         super.init(nibName: nil, bundle: nil)
@@ -35,7 +35,7 @@ class StatsVC: UIViewController {
 
     
 
-    let scoreLabel: UILabel = {
+    let streakLabel: UILabel = {
         let label = UILabel()
         label.font = UIFont(name: "SF", size: 24)
         label.translatesAutoresizingMaskIntoConstraints = false
@@ -43,9 +43,8 @@ class StatsVC: UIViewController {
         return label
     }()
     
-    let missedLabel: UILabel = {
+    let lastThreeResultsLabel: UILabel = {
         let label = UILabel()
-        label.font = UIFont(name: "SF", size: 24)
         label.translatesAutoresizingMaskIntoConstraints = false
         label.textColor = .white
         return label
@@ -81,19 +80,26 @@ class StatsVC: UIViewController {
         
         dismissButton.addTarget(self, action: #selector(dismissHandler(_:)), for: .touchUpInside)
         
-        scoreLabel.text = "Current Score: " + String(score!)
-        missedLabel.text = "Missed Answers: " + String(missed!)
-        
-        view.addSubview(scoreLabel)
+        streakLabel.text = "Longest Streak: " + String(streak!)
+        lastThreeResultsLabel.text = "Previous Results: "
+        for r in lastThreeResults! {
+            if r {
+                lastThreeResultsLabel.text = lastThreeResultsLabel.text! + "Correct! "
+            } else {
+                lastThreeResultsLabel.text = lastThreeResultsLabel.text! + "Incorrect! "
+            }
+        }
+
+        view.addSubview(streakLabel)
         NSLayoutConstraint.activate([
-            scoreLabel.centerXAnchor.constraint(equalTo: view.centerXAnchor),
-            scoreLabel.topAnchor.constraint(equalTo: view.topAnchor, constant: 200)
+            streakLabel.centerXAnchor.constraint(equalTo: view.centerXAnchor),
+            streakLabel.topAnchor.constraint(equalTo: view.topAnchor, constant: 200)
         ])
         
-        view.addSubview(missedLabel)
+        view.addSubview(lastThreeResultsLabel)
         NSLayoutConstraint.activate([
-            missedLabel.centerXAnchor.constraint(equalTo: view.centerXAnchor),
-            missedLabel.topAnchor.constraint(equalTo: view.topAnchor, constant: 230)
+            lastThreeResultsLabel.centerXAnchor.constraint(equalTo: view.centerXAnchor),
+            lastThreeResultsLabel.topAnchor.constraint(equalTo: view.topAnchor, constant: 250)
         ])
         
         view.addSubview(dismissButton)

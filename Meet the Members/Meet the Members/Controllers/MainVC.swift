@@ -13,9 +13,12 @@ class MainVC: UIViewController {
     // Create a property for our timer, we will initialize it in viewDidLoad
     var timer: Timer?
     var currTime: Int = 5
-    var paused: Bool? = false
+    var paused: Bool = false
     var currScore: Int = 0
-    var missedAnswers: Int = 0
+    var longestStreak: Int = 0
+    var currStreak: Int = 0
+    var lastThree: [Bool]? = [false]
+    var correct: String = ""
     
     // MARK: STEP 7: UI Customization
     // Action Items:
@@ -54,6 +57,14 @@ class MainVC: UIViewController {
         return label
     }()
     
+//    let nameLabel: UILabel = {
+//        let label = UILabel()
+//        label.font = UIFont(name: "SF-Bold", size: 20)
+//        label.textColor = .white
+//        label.translatesAutoresizingMaskIntoConstraints = false
+//        return label
+//    }()
+    
     // MARK: STEP 10: Stats Button
     // Action Items:
     // - Follow the examples you've seen so far, create and
@@ -81,10 +92,28 @@ class MainVC: UIViewController {
         
     }()
     
+    let pauseButton: UIButton = {
+        let button = UIButton()
+        button.translatesAutoresizingMaskIntoConstraints = false
+
+        var config = UIButton.Configuration.filled()
+        config.baseBackgroundColor = .gray
+        config.imagePadding = 10
+        button.configuration = config
+        
+        let image = UIImage(systemName: "pause.circle.fill")
+        button.setImage(image, for: .normal)
+        
+        return button
+    }()
+    
     override func viewDidLoad() {
         view.backgroundColor = .white
         
+        getNextQuestion()
+        
         paused = false
+        pauseButton.addTarget(self, action: #selector(tapPauseHandler(_:)), for: .touchUpInside)
         
         // MARK: STEP 6: Adding Subviews and Constraints
         // Action Items:
@@ -110,6 +139,18 @@ class MainVC: UIViewController {
             statsButton.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -200),
             statsButton.topAnchor.constraint(equalTo: view.topAnchor, constant: 30),
         ])
+        
+        self.view.addSubview(pauseButton)
+        NSLayoutConstraint.activate([
+            pauseButton.centerXAnchor.constraint(equalTo: view.centerXAnchor),
+            pauseButton.topAnchor.constraint(equalTo: view.topAnchor, constant: 30),
+        ])
+        
+//        self.view.addSubview(nameLabel)
+//        NSLayoutConstraint.activate([
+//            nameLabel.centerXAnchor.constraint(equalTo: self.view.centerXAnchor),
+//            nameLabel.topAnchor.constraint(equalTo: view.topAnchor, constant: 60)
+//        ])
         
         self.view.addSubview(imageView)
         NSLayoutConstraint.activate([
@@ -152,7 +193,6 @@ class MainVC: UIViewController {
         ])
         
         imageView.sizeToFit()
-        getNextQuestion()
         
         // MARK: STEP 9: Bind Callbacks to the Buttons
         // Action Items:
@@ -173,8 +213,8 @@ class MainVC: UIViewController {
         timerLabel.text = "Time: " + String(currTime)
         timerLabel.translatesAutoresizingMaskIntoConstraints = false
         NSLayoutConstraint.activate([
-            timerLabel.leadingAnchor.constraint(equalTo: self.view.leadingAnchor, constant: 250),
-            timerLabel.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -40),
+            timerLabel.leadingAnchor.constraint(equalTo: self.view.leadingAnchor, constant: 280),
+            timerLabel.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -20),
             timerLabel.topAnchor.constraint(equalTo: view.topAnchor, constant: 40),
         ])
         
@@ -188,6 +228,7 @@ class MainVC: UIViewController {
         // MARK: STEP 13: Resume Game
         
         // MARK: >> Your Code Here <<
+        paused = false
     }
     
     func getNextQuestion() {
@@ -207,6 +248,7 @@ class MainVC: UIViewController {
             b.setTitle(thisOption, for: .normal)
             if thisOption == question?.answer {
                 b.tag = 100
+                correct = thisOption!
                 b.setTitleColor(.green, for: .highlighted)
             } else {
                 b.setTitleColor(.red, for: UIControl.State.highlighted)
@@ -214,7 +256,6 @@ class MainVC: UIViewController {
             b.setTitleColor(.systemGray, for: .normal)
             counter += 1
         }
-        
         currTime = 5
         
     }
@@ -245,7 +286,6 @@ class MainVC: UIViewController {
     }
     
     @objc func timerCallback() {
-//        UIControl.addAction(<#T##self: UIControl##UIControl#>)
         // MARK: >> Your Code Here <<
         if paused == false {
             if currTime > 0 {
@@ -259,30 +299,55 @@ class MainVC: UIViewController {
         timerLabel.text = "Time: " + String(currTime)
     }
     
+    @objc func tapPauseHandler(_ sender: UIButton) {
+        if paused {
+            let image = UIImage(systemName: "pause.circle.fill")
+            pauseButton.setImage(image, for: .normal)
+            paused = false
+        } else {
+            let image = UIImage(systemName: "play.circle.fill")
+            pauseButton.setImage(image, for: .normal)
+            paused = true
+        }
+    }
+    
     @objc func tapAnswerHandler(_ sender: UIButton) {
         // MARK: >> Your Code Here <<
         if sender.tag == 100 {
             if currTime > 0 {
                 currScore += 1
+                currStreak += 1
+            }
+            if lastThree != nil {
+                if lastThree!.count < 3 {
+                    lastThree?.append(true)
+                } else {
+                    lastThree = [lastThree![1], lastThree![2], true]
+                }
             }
             sender.setTitleColor(.green, for: .highlighted)
         } else {
-            missedAnswers += 1
-            sender.setTitleColor(.red, for: .selected)
+            if currStreak > longestStreak {
+                longestStreak = currStreak
+            }
+            currStreak = 0
+            if lastThree != nil {
+                if lastThree!.count < 3 {
+                    lastThree?.append(false)
+                } else {
+                    lastThree = [lastThree![1], lastThree![2], false]
+                }
+            }
+            sender.setTitleColor(.red, for: .highlighted)
         }
+        sleep(2)
         getNextQuestion()
-        
-        
-        //startTimer()?
-        //if correct answer : turn button green, add one to score
-        // if wrong: turn red, not one to score
-        // either: get new question
         
     }
     
     @objc func tapStatsHandler(_ action: UIAction) {
         
-        let vc = StatsVC(score: currScore, missed: missedAnswers)
+        let vc = StatsVC(streak: currScore, lastThreeResults: lastThree!)
         
         vc.modalPresentationStyle = .fullScreen
 
@@ -304,6 +369,5 @@ class MainVC: UIViewController {
         
         present(vc, animated: true, completion: nil)
         
-        paused = false
     }
 }
