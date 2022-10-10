@@ -12,6 +12,10 @@ class MainVC: UIViewController {
     
     // Create a property for our timer, we will initialize it in viewDidLoad
     var timer: Timer?
+    var currTime: Int = 5
+    var paused: Bool? = false
+    var currScore: Int = 0
+    var missedAnswers: Int = 0
     
     // MARK: STEP 7: UI Customization
     // Action Items:
@@ -21,7 +25,8 @@ class MainVC: UIViewController {
         let view = UIImageView()
         
         // MARK: >> Your Code Here <<
-    
+        //view.sizeToFit()
+        
         view.translatesAutoresizingMaskIntoConstraints = false
         
         return view
@@ -35,12 +40,18 @@ class MainVC: UIViewController {
             button.tag = index
             
             // MARK: >> Your Code Here <<
-            
+            var config = UIButton.Configuration.gray()
+            button.configuration = config
             button.translatesAutoresizingMaskIntoConstraints = false
             
             return button
         }
-        
+    }()
+    
+    let timerLabel: UILabel = {
+        let label = UILabel()
+        label.font = UIFont(name: "SF", size: 12)
+        return label
     }()
     
     // MARK: STEP 10: Stats Button
@@ -51,8 +62,29 @@ class MainVC: UIViewController {
     
     // MARK: >> Your Code Here <<
     
+    let statsButton: UIButton = {
+        let button = UIButton()
+        
+        button.setTitle("Stats", for: UIControl.State.normal)
+        button.setTitleColor(.white, for: .normal)
+        button.translatesAutoresizingMaskIntoConstraints = false
+
+        var config = UIButton.Configuration.filled()
+        config.baseBackgroundColor = .systemBlue
+        config.imagePadding = 10
+        button.configuration = config
+        
+        let image = UIImage(systemName: "chart.bar.fill")
+        button.setImage(image, for: .normal)
+        
+        return button
+        
+    }()
+    
     override func viewDidLoad() {
         view.backgroundColor = .white
+        
+        paused = false
         
         // MARK: STEP 6: Adding Subviews and Constraints
         // Action Items:
@@ -72,6 +104,54 @@ class MainVC: UIViewController {
         
         // MARK: >> Your Code Here <<
         
+        self.view.addSubview(statsButton)
+        NSLayoutConstraint.activate([
+            statsButton.leadingAnchor.constraint(equalTo: self.view.leadingAnchor, constant: 30),
+            statsButton.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -200),
+            statsButton.topAnchor.constraint(equalTo: view.topAnchor, constant: 30),
+        ])
+        
+        self.view.addSubview(imageView)
+        NSLayoutConstraint.activate([
+            imageView.leadingAnchor.constraint(equalTo: self.view.leadingAnchor, constant: 40),
+            imageView.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -40),
+            imageView.topAnchor.constraint(equalTo: view.topAnchor, constant: 100),
+            imageView.bottomAnchor.constraint(equalTo: view.bottomAnchor, constant: -350)
+        ])
+        
+        self.view.addSubview(buttons[0])
+        NSLayoutConstraint.activate([
+            buttons[0].leadingAnchor.constraint(equalTo: self.view.leadingAnchor, constant: 40),
+            buttons[0].trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -40),
+            buttons[0].topAnchor.constraint(equalTo: view.topAnchor, constant: 500),
+            buttons[0].bottomAnchor.constraint(equalTo: view.bottomAnchor, constant: -250)
+        ])
+        
+        self.view.addSubview(buttons[1])
+        NSLayoutConstraint.activate([
+            buttons[1].leadingAnchor.constraint(equalTo: self.view.leadingAnchor, constant: 40),
+            buttons[1].trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -40),
+            buttons[1].topAnchor.constraint(equalTo: view.topAnchor, constant: 550),
+            buttons[1].bottomAnchor.constraint(equalTo: view.bottomAnchor, constant: -200)
+        ])
+        
+        self.view.addSubview(buttons[2])
+        NSLayoutConstraint.activate([
+            buttons[2].leadingAnchor.constraint(equalTo: self.view.leadingAnchor, constant: 40),
+            buttons[2].trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -40),
+            buttons[2].topAnchor.constraint(equalTo: view.topAnchor, constant: 600),
+            buttons[2].bottomAnchor.constraint(equalTo: view.bottomAnchor, constant: -150)
+        ])
+        
+        self.view.addSubview(buttons[3])
+        NSLayoutConstraint.activate([
+            buttons[3].leadingAnchor.constraint(equalTo: self.view.leadingAnchor, constant: 40),
+            buttons[3].trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -40),
+            buttons[3].topAnchor.constraint(equalTo: view.topAnchor, constant: 650),
+            buttons[3].bottomAnchor.constraint(equalTo: view.bottomAnchor, constant: -100)
+        ])
+        
+        imageView.sizeToFit()
         getNextQuestion()
         
         // MARK: STEP 9: Bind Callbacks to the Buttons
@@ -79,12 +159,27 @@ class MainVC: UIViewController {
         // - Bind the `didTapAnswer(_:)` function to the buttons.
         
         // MARK: >> Your Code Here <<
-        
+        for b in buttons {
+            b.addTarget(self, action: #selector(tapAnswerHandler(_:)), for: .touchUpInside)
+        }
         
         // MARK: STEP 10: Stats Button
         // See instructions above.
         
         // MARK: >> Your Code Here <<
+        statsButton.addTarget(self, action: #selector(tapStatsHandler(_:)), for: .touchUpInside)
+
+        self.view.addSubview(timerLabel)
+        timerLabel.text = "Time: " + String(currTime)
+        timerLabel.translatesAutoresizingMaskIntoConstraints = false
+        NSLayoutConstraint.activate([
+            timerLabel.leadingAnchor.constraint(equalTo: self.view.leadingAnchor, constant: 250),
+            timerLabel.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -40),
+            timerLabel.topAnchor.constraint(equalTo: view.topAnchor, constant: 40),
+        ])
+        
+        startTimer()
+        
     }
     
     // What's the difference between viewDidLoad() and
@@ -103,6 +198,25 @@ class MainVC: UIViewController {
         //   the question instance
         
         // MARK: >> Your Code Here <<
+        let qp = QuestionProvider()
+        let question: QuestionProvider.Question? = qp.nextQuestion()
+        imageView.image = question?.image
+        var counter = 0
+        for b in buttons {
+            let thisOption:String? = question?.choices[counter]
+            b.setTitle(thisOption, for: .normal)
+            if thisOption == question?.answer {
+                b.tag = 100
+                b.setTitleColor(.green, for: .highlighted)
+            } else {
+                b.setTitleColor(.red, for: UIControl.State.highlighted)
+            }
+            b.setTitleColor(.systemGray, for: .normal)
+            counter += 1
+        }
+        
+        currTime = 5
+        
     }
     
     // MARK: STEP 8: Buttons and Timer Callback
@@ -131,21 +245,47 @@ class MainVC: UIViewController {
     }
     
     @objc func timerCallback() {
-        
+//        UIControl.addAction(<#T##self: UIControl##UIControl#>)
         // MARK: >> Your Code Here <<
+        if paused == false {
+            if currTime > 0 {
+                timerLabel.textColor = .black
+                currTime -= 1
+            } else {
+                timerLabel.textColor = .systemRed
+                getNextQuestion()
+            }
+        }
+        timerLabel.text = "Time: " + String(currTime)
     }
     
-    func tapAnswerHandler(_ action: UIAction) {
+    @objc func tapAnswerHandler(_ sender: UIButton) {
         // MARK: >> Your Code Here <<
-
+        if sender.tag == 100 {
+            if currTime > 0 {
+                currScore += 1
+            }
+            sender.setTitleColor(.green, for: .highlighted)
+        } else {
+            missedAnswers += 1
+            sender.setTitleColor(.red, for: .selected)
+        }
+        getNextQuestion()
+        
+        
+        //startTimer()?
+        //if correct answer : turn button green, add one to score
+        // if wrong: turn red, not one to score
+        // either: get new question
+        
     }
     
-    func tapStatsHandler(_ action: UIAction) {
+    @objc func tapStatsHandler(_ action: UIAction) {
         
-        let vc = StatsVC(data: "Hello")
+        let vc = StatsVC(score: currScore, missed: missedAnswers)
         
         vc.modalPresentationStyle = .fullScreen
-        
+
         // MARK: STEP 11: Going to StatsVC
         // When we are navigating between VCs (e.g MainVC -> StatsVC),
         // we often need a mechanism for transferring data
@@ -160,6 +300,10 @@ class MainVC: UIViewController {
         //   your custom init for `StatsVC`
         // - Update the call site here on line 139
         
+        paused = true
+        
         present(vc, animated: true, completion: nil)
+        
+        paused = false
     }
 }

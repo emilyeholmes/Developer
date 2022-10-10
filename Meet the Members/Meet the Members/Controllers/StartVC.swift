@@ -56,7 +56,13 @@ class StartVC: UIViewController {
         // MARK: >> Your Code Here <<
         
         button.translatesAutoresizingMaskIntoConstraints = false
+        //button.backgroundColor = .systemCyan
         
+        var config = UIButton.Configuration.tinted()
+        config.baseForegroundColor = .systemCyan
+        config.baseBackgroundColor = .systemCyan
+        config.buttonSize = .large
+        button.configuration = config
         return button
     }()
 
@@ -108,10 +114,12 @@ class StartVC: UIViewController {
             welcomeLabel.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -50)
         ])
         
-        // MARK: >> Your Code Here <<
+        view.addSubview(startButton)
         
         NSLayoutConstraint.activate([
             // MARK: >> Your Code Here <<
+            startButton.centerXAnchor.constraint(equalTo: view.centerXAnchor),
+            startButton.centerYAnchor.constraint(equalTo: view.centerYAnchor)
         ])
         
         
