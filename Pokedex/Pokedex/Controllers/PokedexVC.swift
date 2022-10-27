@@ -6,16 +6,11 @@
 //
 // MARK: Emily's notes
 // I've added every Pokemon to a collection view, enabled tapping on a Pokemon to get more info
-// - Not sure where to instantiate navigation controller, in this class? Also just not sure about presenting vc's that way (correct commands/methods and where to call them)
-// - I think I have the logic for the search bar but not sure how to actually add the search bar itself to the view (but I have some logic for presenting filtered pokemon: if the search bar is empty, show all the pokemon in the collection view, if the search bar is not empty show only pokemon that match the filtering)
-// - I also know I should be fetching the images differently so it's less laggy I just can't remember the exact syntax
 // - Also the UI is bad :( how to make the cells more centered and less spaced out? and also not sure why spacing btwn image and label is so weird
 
 import UIKit
 
 class PokedexVC: UIViewController {
-    
-    //let navController = UINavigationController(rootViewController: PokedexVC())
     
     let pokemons = PokemonGenerator.shared.getPokemonArray()
     
@@ -33,17 +28,6 @@ class PokedexVC: UIViewController {
         cv.register(PokeCell.self, forCellWithReuseIdentifier: "PokeCell")
         return cv
     }()
-
-    let searchController1: UISearchController = {
-        let sc = UISearchController(searchResultsController: nil)
-        sc.obscuresBackgroundDuringPresentation = false
-        sc.searchBar.placeholder = "Search Pokemon"
-        return sc
-    }()
-    
-    var isSearchBarEmpty: Bool {
-      return searchController1.searchBar.text?.isEmpty ?? true
-    }
     
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -74,13 +58,6 @@ class PokedexVC: UIViewController {
             
             session.resume()
             
-//            DispatchQueue.main.async {
-//                if let imageData = try? Data(contentsOf: myurl!) {
-//                    if let loadedImage = UIImage(data: imageData) {
-//                        iv.image = loadedImage
-//                    }
-//                }
-//            }
             return iv
         }()
         
@@ -90,7 +67,6 @@ class PokedexVC: UIViewController {
                 searchController.searchResultsUpdater = self
                 searchController.obscuresBackgroundDuringPresentation = false
                 navigationItem.searchController = searchController
-//                navigationItem.title = "Pokemon" //Navigation Title
                 self.definesPresentationContext = true
             }
         

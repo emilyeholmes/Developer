@@ -10,7 +10,6 @@ import UIKit
 
 class PokemonFocusVC: UIViewController {
     
-    
     let iv: UIImageView = {
         let iv = UIImageView()
         iv.translatesAutoresizingMaskIntoConstraints = false
@@ -21,7 +20,7 @@ class PokemonFocusVC: UIViewController {
     let myName: UILabel = {
         let label = UILabel(frame: .zero)
         label.translatesAutoresizingMaskIntoConstraints = false
-        label.font = UIFont(name: "HelveticaNeue-Bold", size: 16.0)
+        label.font = UIFont(name: "HelveticaNeue-Bold", size: 28.0)
         return label
     }()
     
@@ -88,14 +87,14 @@ class PokemonFocusVC: UIViewController {
         view.addSubview(myDefense)
         
         NSLayoutConstraint.activate([
+            myName.topAnchor.constraint(equalTo: view.topAnchor, constant: 150),
+            myName.centerXAnchor.constraint(equalTo: view.centerXAnchor),
             iv.topAnchor.constraint(equalTo: view.topAnchor, constant: 100),
             iv.bottomAnchor.constraint(equalTo: view.bottomAnchor, constant: -250),
             iv.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 30),
             iv.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -30),
-            myName.topAnchor.constraint(equalTo: iv.bottomAnchor, constant: 5),
-            myName.centerXAnchor.constraint(equalTo: iv.centerXAnchor),
-            myID.topAnchor.constraint(equalTo: myName.bottomAnchor, constant: 5),
-            myID.centerXAnchor.constraint(equalTo: myName.centerXAnchor),
+            myID.topAnchor.constraint(equalTo: iv.bottomAnchor, constant: 10),
+            myID.centerXAnchor.constraint(equalTo: iv.centerXAnchor),
             myHealth.topAnchor.constraint(equalTo: myID.bottomAnchor, constant: 5),
             myHealth.centerXAnchor.constraint(equalTo: myID.centerXAnchor),
             myAttack.topAnchor.constraint(equalTo: myHealth.bottomAnchor, constant: 5),
