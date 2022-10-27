@@ -41,13 +41,18 @@ class PokeCell: UICollectionViewCell {
             
             guard let url = data.imageUrl else { return }
             
-            DispatchQueue.main.async {
+            DispatchQueue.global(priority: .background).async {
                 if let imageData = try? Data(contentsOf: url) {
-                    if let loadedImage = UIImage(data: imageData) {
+                    DispatchQueue.main.async {
+                        guard let loadedImage = UIImage(data: imageData) else {
+                            return
+                        }
+                        
                         self.iv.image = loadedImage
                     }
                 }
             }
+            
             self.myName.text = data.name
             self.myID.text = String(data.id)
         }

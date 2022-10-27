@@ -19,7 +19,7 @@ class PokedexVC: UIViewController {
     
     let pokemons = PokemonGenerator.shared.getPokemonArray()
     
-    var filteredPokemon: [Pokemon] = []
+    var filteredPokemon: [Pokemon] = PokemonGenerator.shared.getPokemonArray()
     
     let cv: UICollectionView = {
         let cv = UICollectionView(frame: .zero, collectionViewLayout: {
@@ -59,13 +59,28 @@ class PokedexVC: UIViewController {
             iv.contentMode = .scaleAspectFill
             
             let myurl = URL(string: "https://fontmeme.com/images/Pokemon-Logo.jpg")
-            DispatchQueue.main.async {
-                if let imageData = try? Data(contentsOf: myurl!) {
-                    if let loadedImage = UIImage(data: imageData) {
-                        iv.image = loadedImage
-                    }
+            
+            let session = URLSession.shared.dataTask(with: URLRequest(url: myurl!)) {
+                responseData, response, error in
+                if let error {
+                    print(error.localizedDescription)
+                    return
+                }
+                
+                DispatchQueue.main.async {
+                    iv.image = UIImage(data: responseData!)
                 }
             }
+            
+            session.resume()
+            
+//            DispatchQueue.main.async {
+//                if let imageData = try? Data(contentsOf: myurl!) {
+//                    if let loadedImage = UIImage(data: imageData) {
+//                        iv.image = loadedImage
+//                    }
+//                }
+//            }
             return iv
         }()
         
@@ -75,7 +90,7 @@ class PokedexVC: UIViewController {
                 searchController.searchResultsUpdater = self
                 searchController.obscuresBackgroundDuringPresentation = false
                 navigationItem.searchController = searchController
-                navigationItem.title = "Pokemon" //Navigation Title
+//                navigationItem.title = "Pokemon" //Navigation Title
                 self.definesPresentationContext = true
             }
         
@@ -85,12 +100,12 @@ class PokedexVC: UIViewController {
         
         
         NSLayoutConstraint.activate([
-            pokeTitle.topAnchor.constraint(equalTo: view.topAnchor, constant: 120),
-            pokeTitle.bottomAnchor.constraint(equalTo: view.topAnchor, constant: 121),
+            pokeTitle.topAnchor.constraint(equalTo: view.topAnchor, constant: 210),
+            pokeTitle.bottomAnchor.constraint(equalTo: view.topAnchor, constant: 211),
             pokeTitle.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 20),
             pokeTitle.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -20),
 
-            cv.topAnchor.constraint(equalTo: self.view.topAnchor, constant: 250),
+            cv.topAnchor.constraint(equalTo: self.view.topAnchor, constant: 280),
             cv.bottomAnchor.constraint(equalTo: self.view.bottomAnchor),
             cv.leadingAnchor.constraint(equalTo: self.view.leadingAnchor),
             cv.trailingAnchor.constraint(equalTo: self.view.trailingAnchor)
@@ -99,38 +114,36 @@ class PokedexVC: UIViewController {
     }
     
     func filterContentForSearchText(_ searchText: String) {
-        filteredPokemon = []
-        for pokemon in pokemons {
-            if pokemon.name.lowercased().contains(searchText.lowercased()) {
-                filteredPokemon.append(pokemon)
-            }
-            else {
-                for type in pokemon.types {
-                    if type.rawValue.lowercased().contains(searchText.lowercased()) {
-                        filteredPokemon.append(pokemon)
+        if searchText == "" {
+            filteredPokemon = pokemons
+        } else {
+            filteredPokemon = []
+            for pokemon in pokemons {
+                if pokemon.name.lowercased().contains(searchText.lowercased()) {
+                    filteredPokemon.append(pokemon)
+                }
+                else {
+                    for type in pokemon.types {
+                        if type.rawValue.lowercased().contains(searchText.lowercased()) {
+                            filteredPokemon.append(pokemon)
+                        }
                     }
                 }
             }
         }
-      
       cv.reloadData()
     }
 }
 
 extension PokedexVC: UICollectionViewDataSource {
     func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
-        return 800
+        return filteredPokemon.count
     }
     
     func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
         let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "PokeCell", for: indexPath) as! PokeCell
-        if isSearchBarEmpty {
-            cell.data = self.pokemons[indexPath.item]
-            return cell
-        } else {
-            cell.data = self.filteredPokemon[indexPath.item]
-            return cell
-        }
+        cell.data = self.filteredPokemon[indexPath.item]
+        return cell
     }
 }
 
@@ -140,7 +153,8 @@ extension PokedexVC: UICollectionViewDelegate {
         
         let focusVC = PokemonFocusVC()
         focusVC.data = pokemon
-        present(focusVC, animated: true)
+        self.navigationController?.pushViewController(focusVC, animated: true)
+        //present(focusVC, animated: true)
     }
 }
 
